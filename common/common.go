@@ -22,10 +22,9 @@ func GenerateHash(password string) (string, error) {
 
 }
 
-func ComparePassword(hashedPassword, password []byte) error {
+func ComparePassword(hashedPassword, password []byte) bool {
 
-	isValid := bcrypt.CompareHashAndPassword(hashedPassword, password)
-
-	return isValid
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	return err == nil
 
 }
