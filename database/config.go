@@ -16,7 +16,7 @@ func ConfigDB() error {
 		return err
 	}
 
-	db.AutoMigrate(&schemas.Users{})
+	db.AutoMigrate(&schemas.Mentees{}, &schemas.Mentors{})
 	DB = db
 
 	return nil

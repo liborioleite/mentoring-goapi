@@ -9,8 +9,10 @@ import (
 
 func InitializeRoutes(app *fiber.App) {
 
-	app.Post("/register", auth.Register)
-	app.Post("/login", auth.Login)
+	app.Post("/register/mentor", auth.RegisterMentor)
+	app.Post("/register/mentee", auth.RegisterMentee)
+	app.Post("/login/mentor", auth.LoginMentor)
+	app.Post("/login/mentee", auth.LoginMentee)
 
 	// JWT Middleware
 	app.Use(jwtware.New(jwtware.Config{
@@ -20,4 +22,12 @@ func InitializeRoutes(app *fiber.App) {
 	// Mentor Routes
 	app.Get("/mentees", controllers.GetMentees)
 	app.Get("/mentee/:id", controllers.GetMentee)
+	app.Put("/me/update/:id", controllers.UpdateMe)
+	app.Put("/me/status-account/:id", controllers.ChangeMentorStatus) //REVER LOGICA
+
+	// Mentee Routes
+	app.Get("/mentors", controllers.GetMentors)
+	app.Get("/mentee/:id", controllers.GetMentee)
+	app.Put("/mentee/update/:id", controllers.UpdateMentee)
+	app.Put("/mentee/status-account/:id", controllers.ChangeMenteeStatus) //REVER LOGICA
 }

@@ -7,20 +7,20 @@ import (
 	"github.com/liborioleite/mentoring-goapi/structs"
 )
 
-func GetMentees(c *fiber.Ctx) error {
+func GetMentors(c *fiber.Ctx) error {
 
 	// Crio uma variavel mentee que vai ser um array do tipo Users.
-	mentees := []schemas.Mentees{}
+	mentors := []schemas.Mentors{}
 
-	filters := c.Query("interest")
+	filters := c.Query("activity")
 
-	resultMentees := database.DB.Where("role = ? AND area_of_interest LIKE ? AND status = ?", "mentee", "%"+filters+"%", true).Find(&mentees)
+	resultMentors := database.DB.Where("role = ? AND area_of_activity LIKE ? AND status = ?", "mentor", "%"+filters+"%", true).Find(&mentors)
 
 	// Sempre verifico se houve erro na consulta e passo um retorno caso tenha tido erro.
-	if resultMentees.Error != nil {
+	if resultMentors.Error != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"erro":    "Falha ao realizar requisição",
-			"message": resultMentees.Error,
+			"message": resultMentors.Error,
 		})
 	}
 
@@ -29,25 +29,26 @@ func GetMentees(c *fiber.Ctx) error {
 	// Eu crei essa variavel por um motivo, eu poderia somente ja retornar a variavel mentees e o metodo estava concluido.
 	// porém se eu fizer isso eu vou retornar de fato uma lista de usuarios que sao mentees, mas com todas as informações incluindo a senha.
 	// pra não acontecer isso eu crio a variavel, depois percorro ela pegando somente as informações que eu quero retornar.
-	responseMentees := []structs.MenteeStruct{}
+	responseMentors := []structs.MentorStruct{}
 
-	for _, mentee := range mentees {
-		responseMentees = append(responseMentees, structs.MenteeStruct{
-			ID:             uint64(mentee.ID),
-			Nome:           mentee.Name,
-			Email:          mentee.Email,
-			Role:           mentee.Role,
-			AreaOfInterest: mentee.AreaOfInterest,
-			AvailableTimes: mentee.AvailableTimes,
+	for _, mentor := range mentors {
+		responseMentors = append(responseMentors, structs.MentorStruct{
+			ID:             uint64(mentor.ID),
+			Nome:           mentor.Name,
+			Email:          mentor.Email,
+			Role:           mentor.Role,
+			AreaOfActivity: mentor.AreaOfActivity,
+			AvailableTimes: mentor.AvailableTimes,
+			Status:         mentor.Status,
 		})
 	}
 
-	return c.JSON(responseMentees)
+	return c.JSON(responseMentors)
 
 }
 
-func GetMentee(c *fiber.Ctx) error {
-	menteeId, err := c.ParamsInt("id")
+func GetMentor(c *fiber.Ctx) error {
+	mentorId, err := c.ParamsInt("id")
 
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -55,39 +56,40 @@ func GetMentee(c *fiber.Ctx) error {
 		})
 	}
 
-	mentee := schemas.Mentees{}
+	mentor := schemas.Mentors{}
 
-	resultMenteee := database.DB.Where(&schemas.Mentees{
-		ID:     uint64(menteeId),
+	resultMentor := database.DB.Where(&schemas.Mentors{
+		ID:     uint64(mentorId),
 		Role:   "mentee",
 		Status: true,
-	}).First(&mentee)
+	}).First(&mentor)
 
-	if resultMenteee.Error != nil {
+	if resultMentor.Error != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"erro": "Falha ao realizar requisição, usuário não encontrado.",
 		})
 	}
 
 	return c.JSON(fiber.Map{
-		"ID":             mentee.ID,
-		"Name":           mentee.Name,
-		"Username":       mentee.Username,
-		"Role":           mentee.Role,
-		"Description":    mentee.Description,
-		"AreaOfInterest": mentee.AreaOfInterest,
-		"Status":         mentee.Status,
-		"Created_at":     mentee.CreatedAt,
-		"Updated_at":     mentee.UpdatedAt,
+		"ID":             mentor.ID,
+		"Name":           mentor.Name,
+		"Username":       mentor.Username,
+		"Role":           mentor.Role,
+		"Description":    mentor.Description,
+		"AreaOfActivity": mentor.AreaOfActivity,
+		"AvailableTimes": mentor.AvailableTimes,
+		"Status":         mentor.Status,
+		"Created_at":     mentor.CreatedAt,
+		"Updated_at":     mentor.UpdatedAt,
 	})
 
 }
 
-func UpdateMe(c *fiber.Ctx) error {
+func UpdateMentee(c *fiber.Ctx) error {
 
-	data := structs.UpdateMentorStruct{}
+	data := structs.UpdateMenteeStruct{}
 
-	mentorId, err := c.ParamsInt("id")
+	menteeId, err := c.ParamsInt("id")
 
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -102,40 +104,41 @@ func UpdateMe(c *fiber.Ctx) error {
 		})
 	}
 
-	var mentor = schemas.Mentors{}
+	var mentee = schemas.Mentees{}
 
-	resultMentor := database.DB.Where(&schemas.Mentors{
-		ID: uint64(mentorId),
-	}).First(&mentor)
+	resultMentee := database.DB.Where(&schemas.Mentees{
+		ID:     uint64(menteeId),
+		Status: true,
+	}).First(&mentee)
 
-	if resultMentor.Error != nil {
+	if resultMentee.Error != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"Message": "Usuário não encontrado.",
-			"Error":   resultMentor.Error,
+			"Error":   resultMentee.Error,
 		})
 	}
 
 	// Verifica campo a campo se foi enviado algo, e atualiza apenas se tiver conteúdo
 	if data.Email != "" {
-		mentor.Email = data.Email
+		mentee.Email = data.Email
 	}
-	if data.AreaOfActivity != "" {
-		mentor.AreaOfActivity = data.AreaOfActivity
+	if data.AreaOfInterest != "" {
+		mentee.AreaOfInterest = data.AreaOfInterest
 	}
 	if data.Description != "" {
-		mentor.Description = data.Description
+		mentee.Description = data.Description
 	}
 	if data.Contact != "" {
-		mentor.Contact = data.Contact
+		mentee.Contact = data.Contact
 	}
 	if data.AvailableTimes != "" {
-		mentor.AvailableTimes = data.AvailableTimes
+		mentee.AvailableTimes = data.AvailableTimes
 	}
 
 	// Salva as mudanças no banco
-	if err := database.DB.Save(&mentor).Error; err != nil {
+	if err := database.DB.Save(&mentee).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"Message": "Erro ao atualizar mentor.",
+			"Message": "Erro ao atualizar mentee.",
 			"Error":   err.Error(),
 		})
 	}
@@ -145,11 +148,11 @@ func UpdateMe(c *fiber.Ctx) error {
 	})
 }
 
-func ChangeMentorStatus(c *fiber.Ctx) error {
+func ChangeMenteeStatus(c *fiber.Ctx) error {
 
-	data := structs.ChangeMentorStatusStruct{}
+	data := structs.ChangeMenteeStatusStruct{}
 
-	mentorId, err := c.ParamsInt("id")
+	menteeId, err := c.ParamsInt("id")
 
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -164,22 +167,22 @@ func ChangeMentorStatus(c *fiber.Ctx) error {
 		})
 	}
 
-	var mentor = schemas.Mentors{}
+	var mentee = schemas.Mentees{}
 
-	resultMentor := database.DB.Where(&schemas.Mentors{
-		ID: uint64(mentorId),
-	}).First(&mentor)
+	resultMentee := database.DB.Where(&schemas.Mentees{
+		ID: uint64(menteeId),
+	}).First(&mentee)
 
-	if resultMentor.Error != nil {
+	if resultMentee.Error != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"Message": "Usuário não encontrado.",
-			"Error":   resultMentor.Error,
+			"Error":   resultMentee.Error,
 		})
 	}
 
-	mentor.Status = data.Status
+	mentee.Status = data.Status
 
-	if err := database.DB.Save(&mentor).Error; err != nil {
+	if err := database.DB.Save(&mentee).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"Message": "Erro ao atualizar informações.",
 			"Error":   err.Error(),
